@@ -1,19 +1,14 @@
 package com.grouptwosoftworks.collegemap;
 
 import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.games.achievement.Achievements;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -26,7 +21,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.vision.face.Landmark;
+
 import org.apache.commons.csv.*;
 
 import java.io.BufferedReader;
@@ -45,6 +40,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker end;
     private Polyline path;
 
+    private Button reset;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +52,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
+        reset = (Button) findViewById(R.id.reset);
+        reset.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(start!=null){start.remove();start=null;}
+                if(end!=null){end.remove(); end=null; path.remove(); path = null;}
+                LatLngBounds bounds = prepareBounds();
+                mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 200));
+            }
+        });
     }
 
     private void readCSV(){
@@ -69,10 +76,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             BitmapDescriptor pointer_icon = BitmapDescriptorFactory.fromResource(R.drawable.penn_college);
             int i =0;
             for( CSVRecord record: records){
-                pois[i] = new POI(record.get("key"),Double.parseDouble(record.get("lat")),Double.parseDouble(record.get("lng")),record.get("name"), record.get("desc"));
+                pois[i] = new POI(record.get("key").toUpperCase(),Double.parseDouble(record.get("lat")),Double.parseDouble(record.get("lng")),record.get("name"), record.get("desc"));
                 MarkerOptions mo = new MarkerOptions();
                 mo.position(new LatLng(pois[i].lat,pois[i].lng));
-                mo.title(pois[i].name);
+                mo.title(pois[i].key);
+                mo.snippet(pois[i].name + "\ncords: " + mo.getPosition().latitude + ", " + mo.getPosition().longitude);
                 mo.icon(pointer_icon);
                 mMap.addMarker(mo);
                 i++;
@@ -83,31 +91,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-    public void onMap(){
 
-    }
-
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+    private LatLngBounds prepareBounds(){
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        readCSV();
         for(POI poi : pois){
             LatLng ll = new LatLng(poi.lat,poi.lng);
             builder.include(ll);
         }
+        return builder.build();
+    }
 
-        final LatLngBounds bounds = builder.build();
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
+            @Override
+            public View getInfoWindow(Marker marker) {return null;}
+
+            @Override
+            public View getInfoContents(Marker marker) {
+                View view = getLayoutInflater().inflate(R.layout.custom_info_window, null);
+                TextView keyname = (TextView) view.findViewById(R.id.keyname);
+                TextView snippet = (TextView) view.findViewById(R.id.snippet);
+
+                keyname.setText(marker.getTitle());
+                snippet.setText(marker.getSnippet());
+                return  view;
+            }
+        });
+
+        //LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        readCSV();
+        final LatLngBounds bounds =  prepareBounds();
+//        for(POI poi : pois){
+//            LatLng ll = new LatLng(poi.lat,poi.lng);
+//            builder.include(ll);
+//        }
+
+        //final LatLngBounds bounds = builder.build();
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
@@ -148,6 +169,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             end = mMap.addMarker(new MarkerOptions().position(latLng));
             //draw line
             path = mMap.addPolyline(new PolylineOptions().add(start.getPosition()).add(end.getPosition()));
+
             Location location1 = new Location("");
             location1.setLatitude(start.getPosition().latitude);
             location1.setLongitude(start.getPosition().longitude);
@@ -157,8 +179,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             location2.setLongitude(end.getPosition().longitude);
 
             float dist = location1.distanceTo(location2);
+            String dist_out = String.format("%.2f", dist);
 
-            Toast.makeText(getApplicationContext(),"Distance is " + dist + " meters",Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(),"Distance is " +  dist_out + " meters",Toast.LENGTH_LONG).show();
         }
     }
 
