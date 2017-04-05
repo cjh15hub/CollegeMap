@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <poi>
+        <lat>41.233994</lat>
+        <lng>-77.026155</lng>
+        <key>ATHS</key>
+        <name>Robert L. Breuder Advanced Technology &amp; Health Sciences Center</name>
+        <desc>The ATHS houses classes for the School of Industrial, Computing &amp; Engineering Technologies (east wing), School of Business &amp; Hospitality (east wing); and School of Health Sciences (west wing).
+            The building also contains the offices of the Plastics Innovation &amp; Resource Center, Mail &amp; Document Services, and the School of Business &amp; Hospitality.</desc>
+    </poi>
+    <poi>
+        <lat>41.234543</lat>
+        <lng>-77.023451</lng>
+        <key>CC</key>
+        <name>Alvin C. Bush Campus Center</name>
+        <desc>The Campus Center is home to the College Store, StudentActivities, Athletics, Counseling Services, Career Services, College Health Services,artrooms, Penn's Inn nightclub,
+            the FitnessCenter, a quiet study lounge, a games room, and various Dining Services operations (Wildcat Express convenience store and CC Commons).</desc>
+    </poi>
+</resources>
